@@ -2,7 +2,10 @@ from maya import cmds
 
 
 class LegoBrick(object):
-    def create_brick(self, length, width, plate=False):
+    def __init__(self):
+        self.brick = None
+
+    def create_brick(self, length, width, color, plate=False):
         size_y = 0.32 if plate else 0.96
         size_x = width * 0.8
         size_z = length * 0.8
@@ -34,3 +37,17 @@ class LegoBrick(object):
                 cmds.move((-size_z / 2.0 + (j + 1) * 0.8), moveZ=True, a=True)
 
                 brick = cmds.polyCBoolOp(brick, inner_nub, op=1, ch=False)
+
+        print(brick)
+        self.apply_material(color)
+        self.brick = brick
+
+    def apply_material(self, color):
+        if cmds.objExists(self.brick[0]):
+            shd_node = cmds.shadingNode('lambert', name="%s_lambert" % self.brick[0], asShader=True)
+            shd_sg = cmds.sets(name="%sSG" % shd_node, empty=True, renderable=True, noSurfaceShader=True)
+            cmds.connectAttr("%s.outColor" % shd_node, "%s.surfaceShader" % shd_sg)
+            cmds.setAttr(shd_node + ".color", color[0], color[1], color[2], type="double3")
+            cmds.sets(self.brick[0], e=True, forceElement=shd_sg)
+
+
